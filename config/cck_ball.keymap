@@ -1,7 +1,13 @@
 #define ZMK_POINTING_DEFAULT_MOVE_VAL 1000 // 600
-#define ZMK_POINTING_DEFAULT_SCRL_VAL 6    // было 12 = 2 «клика» колеса за щелчок
-                                           // энкодера (замер: deltaY 200 px).
-                                           // 6 = ровно один клик, как у обычной мыши.
+// ВАЖНО: это НЕ «пикселей за щелчок», а СКОРОСТЬ. За один тик &msc набегает
+// SCRL_VAL * trigger-period-ms / 1000, и отправляется только ЦЕЛАЯ часть
+// (behavior_input_two_axis.c: update_movement_1d + track_remainder), а при
+// отпускании остаток обнуляется. Чтобы щелчок энкодера дал ровно одно событие,
+// единица должна набраться за ОДИН тик: SCRL_VAL >= 1000 / trigger-period-ms.
+// При периоде 8 мс это >= 125; берём 140 (=1.12 за тик) с запасом.
+// Ретроспектива: вендорские 12 при периоде 16 давали 0.192 за тик — событие
+// уходило лишь через ~96 мс удержания, поэтому и требовался tap-ms=100.
+#define ZMK_POINTING_DEFAULT_SCRL_VAL 140
 
 #include <input/processors.dtsi>
 #include <zephyr/dt-bindings/input/input-event-codes.h>
@@ -12,7 +18,9 @@
 
 &mmv_input_listener { input-processors = <&zip_xy_scaler 2 1>; };
 
-&msc_input_listener { input-processors = <&zip_scroll_scaler 2 1>; };
+// Множитель 1:1 — одно событие скролла = один «клик» колеса (100 px).
+// С вендорским 2:1 каждый щелчок давал двойной клик (замер: 200 px).
+&msc_input_listener { input-processors = <&zip_scroll_scaler 1 1>; };
 
 &msc {
     acceleration-exponent = <0>;      // 0
@@ -22,7 +30,8 @@
     // нажатия (behavior_input_two_axis.c: k_work_schedule(..., trigger_period_ms)),
     // а release его отменяет. Поэтому tap-ms энкодера ОБЯЗАН быть больше периода,
     // иначе не уйдёт ни одного события — при дефолтных 16 мс и tap-ms=12 скролл
-    // пропал полностью. 8 мс + tap-ms 14 => ровно один тик на щелчок.
+    // пропал полностью. Период 8 мс + tap-ms 12 => ровно один тик на щелчок
+    // (тик в 8 мс, отпускание в 12 мс, следующий тик был бы в 16 мс).
     trigger-period-ms = <8>;
 };
 
@@ -45,7 +54,7 @@
         compatible = "zmk,behavior-sensor-rotate";
         #sensor-binding-cells = <0>;
         bindings = <&msc SCRL_DOWN>, <&msc SCRL_UP>;
-        tap-ms = <14>;
+        tap-ms = <12>;
     };
 
     // 左右滚动编码器行为
@@ -53,7 +62,7 @@
         compatible = "zmk,behavior-sensor-rotate";
         #sensor-binding-cells = <0>;
         bindings = <&msc SCRL_LEFT>, <&msc SCRL_RIGHT>;
-        tap-ms = <14>;
+        tap-ms = <12>;
     };
     
     behaviors {
