@@ -58,7 +58,12 @@
 &kp LEFT_CONTROL  &kp LEFT_WIN  &kp LEFT_ALT  &kp DELETE  &kp SPACE  &mo 1   &mo 2   &kp SPACE  &kp ENTER  &kp LEFT_ARROW  &kp DOWN_ARROW  &kp RIGHT_ARROW
             >;
 
-            sensor-bindings = <&inc_dec_kp C_VOL_UP C_VOL_DN &inc_dec_kp PG_UP PG_DN>;
+            // Базовый слой: прокрутка на обоих энкодерах.
+            // Порядок = sensors = <&left_encoder &right_encoder> (cck_ball.dtsi):
+            // первый binding — ЛЕВЫЙ, второй — ПРАВЫЙ.
+            // Громкость и PgUp/PgDn переехали на F_layers (&mo 1).
+            sensor-bindings = <&scroll_horizontal_encoder>,  // левый: влево/вправо
+                              <&scroll_vertical_encoder>;    // правый: вверх/вниз
         };
 
         F_layers {
