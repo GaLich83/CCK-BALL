@@ -18,6 +18,12 @@
     acceleration-exponent = <0>;      // 0
     time-to-max-speed-ms = <300>;       // 300
     delay-ms = <0>;                   // 0
+    // Период тиков. ВАЖНО: первое событие уходит только ЧЕРЕЗ этот период после
+    // нажатия (behavior_input_two_axis.c: k_work_schedule(..., trigger_period_ms)),
+    // а release его отменяет. Поэтому tap-ms энкодера ОБЯЗАН быть больше периода,
+    // иначе не уйдёт ни одного события — при дефолтных 16 мс и tap-ms=12 скролл
+    // пропал полностью. 8 мс + tap-ms 14 => ровно один тик на щелчок.
+    trigger-period-ms = <8>;
 };
 
 &mmv {
@@ -39,7 +45,7 @@
         compatible = "zmk,behavior-sensor-rotate";
         #sensor-binding-cells = <0>;
         bindings = <&msc SCRL_DOWN>, <&msc SCRL_UP>;
-        tap-ms = <12>;
+        tap-ms = <14>;
     };
 
     // 左右滚动编码器行为
@@ -47,7 +53,7 @@
         compatible = "zmk,behavior-sensor-rotate";
         #sensor-binding-cells = <0>;
         bindings = <&msc SCRL_LEFT>, <&msc SCRL_RIGHT>;
-        tap-ms = <12>;
+        tap-ms = <14>;
     };
     
     behaviors {
