@@ -1,5 +1,7 @@
 #define ZMK_POINTING_DEFAULT_MOVE_VAL 1000 // 600
-#define ZMK_POINTING_DEFAULT_SCRL_VAL 12   // 10
+#define ZMK_POINTING_DEFAULT_SCRL_VAL 6    // было 12 = 2 «клика» колеса за щелчок
+                                           // энкодера (замер: deltaY 200 px).
+                                           // 6 = ровно один клик, как у обычной мыши.
 
 #include <input/processors.dtsi>
 #include <zephyr/dt-bindings/input/input-event-codes.h>
@@ -28,11 +30,16 @@
 
 / {
     // 上下滚动编码器行为
+    // tap-ms НАМЕРЕННО маленький. sensor_rotate кладёт в очередь поведений пару
+    // press(держать tap-ms) + release на КАЖДЫЙ щелчок. При tap-ms=100 очередь
+    // переваривает лишь ~10 щелчков/с; быстрее — она переполняется, теряются
+    // release, и &msc (непрерывное поведение) залипает нажатым => бесконечная
+    // прокрутка сама по себе. Проверено замером: 59 событий/с в полном покое.
     scroll_vertical_encoder: scroll_vertical_encoder {
         compatible = "zmk,behavior-sensor-rotate";
         #sensor-binding-cells = <0>;
         bindings = <&msc SCRL_DOWN>, <&msc SCRL_UP>;
-        tap-ms = <100>;
+        tap-ms = <12>;
     };
 
     // 左右滚动编码器行为
@@ -40,7 +47,7 @@
         compatible = "zmk,behavior-sensor-rotate";
         #sensor-binding-cells = <0>;
         bindings = <&msc SCRL_LEFT>, <&msc SCRL_RIGHT>;
-        tap-ms = <100>;
+        tap-ms = <12>;
     };
     
     behaviors {
